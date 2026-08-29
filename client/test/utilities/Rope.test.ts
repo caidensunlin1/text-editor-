@@ -1,7 +1,5 @@
-import { epilog } from 'yargs';
 import { IndexNotInRopeException } from '../../src/exceptions/utilities/IndexNotInRopeException';
 import {Rope} from '../../src/utilities/Rope';
-
 import { beforeEach, expect, test, describe} from '@jest/globals';
 
 
@@ -9,11 +7,8 @@ let text: Rope;
 let bigRope: Rope; 
 beforeEach(()=> {
     text = new Rope("start");
-    
-    
+
 });
-
-
 
 describe("Test Search", ()=> {
     test("search finds correct value",search_finds_correct_value),
@@ -25,7 +20,7 @@ function search_finds_correct_value() {
     expect(text.left).toBe(null);
     expect(text.right).toBe(null);
     expect(text.substring).toBe("start")
-   expect(text.search(3)).toBe("r");
+    expect(text.search(3)).toBe("r");
 }
 
 function search_finds_right_value(){
@@ -91,9 +86,9 @@ function concatiante_works(){
     let L1: Rope |null|undefined= bigRope.left?.left?.left;
     let L2: Rope |null|undefined= bigRope.left?.left?.right;
     let L3: Rope |null|undefined= bigRope.left?.right?.left;
-    let L4: Rope |null | undefined =bigRope.left?.right?.right;
-    let L5: Rope |null | undefined =bigRope.right?.left;
-    let L6: Rope |null | undefined = bigRope.right?.right; 
+    let L4: Rope |null|undefined =bigRope.left?.right?.right;
+    let L5: Rope |null|undefined =bigRope.right?.left;
+    let L6: Rope |null|undefined = bigRope.right?.right; 
 
     //test the leaf node values
     expect(L1?.leftCount).toBe(6); expect(L1?.substring).toBe("hello_");
@@ -108,3 +103,40 @@ function concatiante_works(){
 // function concatiante_makes_balanced_trees(){
     
 // }
+
+
+describe("Test Report", ()=> {
+    test("Report gets the entire string",report_all),
+    test("Report gets substring inbetween string",report_inbetween),
+    test("Report gets a substring in the same leaf", same_leaf_with_report),
+    test("Report gets a substring where i is not start of rope", starting_index_inbetween_leaf_from_report),
+    test("Report throws error when index is out of bounds", report_IndexNotInRopeException)
+})
+
+function report_all(){
+    populateBigRope();
+    expect(bigRope.string).toBe("hello_i_am_a_rope_data_structure");
+}
+
+function report_inbetween(){
+    populateBigRope();
+    expect(bigRope.report(11,22)).toBe("a_rope_data_");
+}
+
+function same_leaf_with_report(){
+    populateBigRope();
+    expect(bigRope.report(11,14)).toBe("a_ro");
+}
+
+function starting_index_inbetween_leaf_from_report(){
+    let word: string = "taco";
+    console.log(word.slice(0,100));
+    populateBigRope();
+    expect(bigRope.report(13,16)).toBe("rope");
+    expect(bigRope.report(18,32)).toBe("data_structure");
+}
+
+function report_IndexNotInRopeException(){
+    expect(()=> bigRope.report(100,1000)).toThrow(IndexNotInRopeException);
+}
+

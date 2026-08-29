@@ -1,6 +1,6 @@
 import { EmptyRopeException } from '../exceptions/utilities/EmptyRopeException';
 import { IndexNotInRopeException } from '../exceptions/utilities/IndexNotInRopeException';
-import { NoSubstringException } from '../exceptions/utilities/NoSubstringException';
+import { InvalidRageForRopeException } from '../exceptions/utilities/InvalidRageForRopeException';
 export class Rope{
 
     private _left: Rope | null;
@@ -34,12 +34,46 @@ export class Rope{
         return this._right;
     }
 
+
     get leftCount(){
         return this._leftCount;
     }
 
+
     get substring(){
         return this._substring;
+    }
+
+    /**
+     * Returns the entire string that the rope holds.
+     * @returns {string}
+     */
+    get string(){
+        console.log("length: " + this.length)
+        return this.report(0,this.length-1)
+    }
+
+    /**
+     *  Returns the entire length of the string that the rope contains.
+     * @returns {number}
+     */
+    get length(){
+        let sum:number = this.leftCount;
+        if(this.left !== null) {
+            dfsSum(this.right);
+        }
+
+        /**
+         * @param {Rope | null} r 
+         * @returns {void}
+         */
+        function dfsSum(r:Rope | null){
+            if (r !== null){
+                sum += r.leftCount;
+                dfsSum(r.right);
+            } 
+        }
+        return sum;
     }
 
     private set left(left: Rope | null){
@@ -66,47 +100,38 @@ export class Rope{
     search(i:number){
 
         /**
-         * @param {Rope} s
+         * @param {Rope}r
          * @param {number} j
          * @returns {string}
          */
-        function dfs(s:Rope,j:number){ 
+        function dfs(r:Rope,j:number){ 
             // left case 
-            if (j < s.leftCount && s.left !== null){ 
-                return dfs(s.left,j);
+            if (j <r.leftCount &&r.left !== null){ 
+                return dfs(r.left,j);
             } // right case 
-            else if(j> s.leftCount && s.right !== null){
-                console.log("went right");
-                return dfs(s.right,j-s.leftCount); // postion of char is in
-            } // relation to s.right is j-s.leftCount
-            else if (s.left === null && s.right === null 
-                && s.substring !== null && j< s.leftCount && j >=0){
-                return s.substring[j];
+            else if(j>r.leftCount &&r.right !== null){
+                return dfs(r.right,j-r.leftCount); // postion of char is in
+            } // relation tor.right is j-s.leftCount
+            else if (r.left === null && r.right === null 
+                &&r.substring !== null && j<r.leftCount && j >=0){
+                return r.substring[j];
             }
             else{
-                console.log(`${j}`);
-                throw new IndexNotInRopeException(i,j,s.substring?.length ??0);
+                throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
             }
-            // else if(j> s.leftCount || j <0){
-            //     console.log(`${j}`);
-            //     throw new IndexNotInRopeException(i,j,s.substring?.length ??0);
-            // }
-            // else{
-            //     throw new NoSubstringException();
-            // }
         }
         return dfs(this,i);
     }
     
     /**
-     * Joins current rope with s into a single rope. 
-     * @param {Rope | null} s 
+     * Joins current rope with r into a single rope. 
+     * @param {Rope | null} r 
      * @returns {Rope}
      */
-    concatiante(s: Rope | null){
-        if( s !== null){
-            let newLeftCount: number = this.totalStringLength();
-            let newRope: Rope = new Rope(this,s);
+    concatiante(r: Rope | null){
+        if( r !== null){
+            let newLeftCount: number = this.length;
+            let newRope: Rope = new Rope(this,r);
             newRope.leftCount = newLeftCount;
             return newRope
         }
@@ -115,32 +140,9 @@ export class Rope{
         }
     }
 
-    /** Finds the length of the string that the rope holds.
-     * @returns {number}
-     */
-    totalStringLength(){
-        let sum:number = this.leftCount;
-        if(this.left !== null) {
-            dfsSum(this.right);
-        }
-
-        /**
-         * @param {Rope | null} s 
-         * @returns {void}
-         */
-        function dfsSum(s:Rope | null){
-            if (s !== null){
-                sum += s.leftCount;
-                dfsSum(s.right);
-            } 
-        }
-        console.log("What that leftCount should be: " + sum);
-        return sum;
-    }
-
     /**
      * Cuts the given rope into two ropes: 
-     * s1 from [0,i] and s2 from (i,n-1]. Then 
+     * r1 from [0,i] and r2 from (i,n-1]. Then 
      * it returns an array of the two given ropes. 
      * @param {number} i 
      * @returns {Array<Rope>}
@@ -155,7 +157,7 @@ export class Rope{
      * @param {Rope} s 
      * @returns {void}
      */
-    insert(i:number,s: Rope | null){
+    insert(i:number,r: Rope | null){
 
     }
 
@@ -175,34 +177,47 @@ export class Rope{
      * @returns {string}
      */
     report(i:number,j:number){
+        console.log();
+        console.log();
+        console.log();
+        console.log();
         let partitions: string[] = [];
+        let charLeft: number = j-i +1;
+        if (charLeft <= 0)  throw new InvalidRageForRopeException(i, j);
         
+        function dfs(r:Rope,start:number){
+            // left case 
+            if (start <r.leftCount &&r.left !== null){ 
+                if(r.leftCount - start < charLeft && r.right !== null){ // right call because, there are 
+                    console.log("Adding right substring at given leftCount: " + r.leftCount );
+                    dfs(r.left,start);
+                    dfs(r.right,0); // more chars left outside of the left calls window. 
+                }else{
+                    dfs(r.left,start);
+                }
+            } // right case 
+            else if(j>r.leftCount &&r.right !== null){
+                  dfs(r.right,start-r.leftCount); // postion of char is in
+                  // relation tor.right is j-s.leftCount
+            } 
+            else if (r.left === null && r.right === null 
+                && r.substring !== null && start<r.leftCount){
 
-        /**
-         * @param {nodeIndex} number
-         * @param {Rope} s 
-         * @returns {void}
-         */
-        function dfs(s:Rope,nodeIndex: number){
-
-            // if(i<= nodeIndex && nodeIndex <=j){
-            //     if(s.left !== null) dfs(s.left,s.left.leftCount);
-            //     if(s.right !== null) dfs(s.right,nodeIndex +s.right.leftCount);
-            // }
-            // else if(i <= nodeIndex){
-            //     if(s.right !== null) dfs(s.right,nodeIndex +s.right.leftCount);
-            // }
-            // else if(j <= nodeIndex){
-            //     if(s.left !== null) dfs(s.left,s.left.leftCount);
-            // }
-        
+                let subString: string = r.substring;
+                let len: number = subString.length;
+                let end: number = start + Math.min(charLeft,len-start);
+                charLeft -= (end-start); 
+                console.log("new charLeft: " +charLeft);
+                console.log("substring being added: " + subString.slice(start,end));
+                partitions.push(subString.slice(start,end));
+            }
+            else{
+                throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
+            }
         }
-
-        
-        dfs(this,this.leftCount);
+        dfs(this,i);
+        console.log("final charLeft: " +charLeft);
         return partitions.join("");
     }
-
-
 
 }   
