@@ -1,16 +1,28 @@
 import { EmptyRopeException } from '../exceptions/utilities/EmptyRopeException';
 import { IndexNotInRopeException } from '../exceptions/utilities/IndexNotInRopeException';
 import { InvalidRageForRopeException } from '../exceptions/utilities/InvalidRageForRopeException';
+
 export class Rope{
+    // Maxmum length that a substring should be allowed
+    // so that it can reduce the overall depth of the tree 
+    // as well as keeping making concatenating and deleting 
+    // in log(n) time.
+    static MAX_LENGTH: number = 512; 
+    // This is the max depth the rope should ever allowed to be
+    // given that it would take an extrem amount of memory and no one 
+    // would ever need a text editor with that many charcters. 
+    static MAX_DEPTH: number =40; 
+    //Increases threshold by 50% before the rope has to rebalance.
+    static REBALANCE_THRESHOLD_COEFFICENT: number =1.5; 
 
     private _left: Rope | null;
     private _right: Rope | null;
     private _leftCount: number=0;
     private _substring: string | null; 
+    private _depth: number =0; 
 
-
-    constructor(substring: string);
-    constructor(left: Rope, right: Rope);
+    constructor(substring: string); //leaf
+    constructor(left: Rope, right: Rope); //parent
     constructor(leftOrSubstring: Rope | string,right?: Rope){
         if(typeof leftOrSubstring === "string"){
             this._left = null;
@@ -39,9 +51,12 @@ export class Rope{
         return this._leftCount;
     }
 
-
     get substring(){
         return this._substring;
+    }
+
+    get depth(){
+        return this._depth;
     }
 
     /**
@@ -49,7 +64,6 @@ export class Rope{
      * @returns {string}
      */
     get string(){
-        console.log("length: " + this.length)
         return this.report(0,this.length-1)
     }
 
@@ -92,13 +106,16 @@ export class Rope{
         this._substring = substring; 
     }
 
+    private set depth(depth: number){
+        this._depth = depth;
+    }
+
     /**
      * Finds the ith postion charcter in the rope. 
      * @param {number} i 
      * @returns {string}
      */
-    search(i:number){
-
+    search(i:number){ 
         /**
          * @param {Rope}r
          * @param {number} j
@@ -128,17 +145,145 @@ export class Rope{
      * @param {Rope | null} r 
      * @returns {Rope}
      */
-    concatiante(r: Rope | null){
+    concatiante(r: Rope | null){ // check that if 
+
         if( r !== null){
-            let newLeftCount: number = this.length;
+            let newLeftCount: number = this.length; 
+            let newDepth: number = Math.max(this.depth,r.depth) +1;
             let newRope: Rope = new Rope(this,r);
             newRope.leftCount = newLeftCount;
-            return newRope
+
+            let totalCount: number =  newLeftCount + r.length;
+            if(newDepth < Rope.REBALANCE_THRESHOLD_COEFFICENT* Math.log2(totalCount)){
+                
+                return newRope
+            }
+            else{
+                return this.rebalance(newRope);
+            }
         }
         else{
             throw new EmptyRopeException();
         }
     }
+
+    /**
+     * 
+     * @param r 
+     * @returns {Rope}
+     */
+    private rebalance(r: Rope){
+        let substrings: string[] = [];
+
+        /**
+         * Takes the given rope and yeilds a list of substrings
+         * from all of its leafs.
+         * @param currRope 
+         * @returns {string[]}
+         */
+        function listOfSubstrings(currRope:Rope){
+            if(currRope.left !== null && currRope.right !== null){
+                listOfSubstrings(currRope.left);
+                listOfSubstrings(currRope.right);
+            }
+            else if(currRope.left !== null){
+                listOfSubstrings(currRope.left);
+            }
+            else if (currRope.right !== null){
+                listOfSubstrings(currRope.right);
+            }
+            else if (currRope.string !== null){
+                substrings.push(currRope.string);
+            }
+        }
+       
+
+        /**
+         * Takes the given list of substrings and concatinates each substring 
+         * such that the length of each leaf with exception of the last one 
+         * contains a substring that is 512 charcters long. 
+         * @returns {Rope[]}
+         */
+        function createLeafs(){
+            let leafList: Rope[] = [];
+
+            let start: number = 0; 
+            let startSub: number = 0; 
+            let count: number = 0; 
+
+            for(let end =0; end <substrings.length; end++){
+                let substring:string = substrings[end]!;
+                if(Rope.MAX_LENGTH -count > substring.length){
+                    count += substring.length;  
+                }
+                else{
+                    let endSub: number = Rope.MAX_LENGTH -count 
+                    let resultString: string;
+
+                    // case in which start and end are in the same substring
+                    if(start === end){
+                        resultString = substring[start]!.slice(startSub,endSub);
+                    }
+                    else{ // slices the start partition, then everything in middle
+                         // and then it finalizes with the end peice of the string. 
+                         resultString =[
+                        substring[start]!.slice(startSub),
+                      ... (end-start > 1 ? substrings.slice(start+1,end) : ""),
+                      substring[end]!.slice(0,endSub)].join("");
+                    }
+                     
+                    leafList.push(new Rope(resultString));
+
+                    start = end+1; 
+                    startSub = endSub +1 < substring.length-1 ? endSub:0;
+                    count = 0; 
+                }
+            }
+            return leafList;
+        }
+
+        /**
+         * Takes the list of ropes and combines them from the leaf level and
+         * works its way up until it eachs the first level. 
+         * @param ropeList 
+         * @returns {Rope}
+         */
+        function createBalancedRope(ropeList: Rope[]){
+            if(ropeList.length == 2){
+                return combine(ropeList[0]!,ropeList[1]!);
+            }
+
+            const SIZE = Math.ceil(ropeList.length/2); 
+            let parentRopeList: Rope[] = Array(SIZE).fill(null);
+            let j: number = 0; 
+            for(let i = 0; i< ropeList.length; i+=2){
+                parentRopeList[j] = combine(ropeList[i]!,ropeList[i+1]!);
+                j+=1;
+            }
+
+            if (ropeList.length % 2 === 1) parentRopeList[SIZE-1] = 
+            combine(parentRopeList.at(-1)!,ropeList.at(-1)!);
+
+            createBalancedRope(parentRopeList);
+        }
+
+        /**
+         * Here for optimzation purposes 
+         * @param r1 
+         * @param r2 
+         * @returns {Rope}
+         */
+        function combine(r1:Rope,r2:Rope){
+            let newRope: Rope = new Rope(r1,r2);
+            newRope.leftCount =  r1.length;
+            newRope.depth = Math.max(r1.depth,r2.depth) +1;
+            return newRope;
+        }
+        
+        listOfSubstrings(r);
+        return createBalancedRope(createLeafs());
+    }
+
 
     /**
      * Cuts the given rope into two ropes: 
@@ -177,10 +322,6 @@ export class Rope{
      * @returns {string}
      */
     report(i:number,j:number){
-        console.log();
-        console.log();
-        console.log();
-        console.log();
         let partitions: string[] = [];
         let charLeft: number = j-i +1;
         if (charLeft <= 0)  throw new InvalidRageForRopeException(i, j);
@@ -188,13 +329,13 @@ export class Rope{
         function dfs(r:Rope,start:number){
             // left case 
             if (start <r.leftCount &&r.left !== null){ 
-                if(r.leftCount - start < charLeft && r.right !== null){ // right call because, there are 
-                    console.log("Adding right substring at given leftCount: " + r.leftCount );
+                if(r.leftCount - start < charLeft && r.right !== null){
                     dfs(r.left,start);
-                    dfs(r.right,0); // more chars left outside of the left calls window. 
+                    // right call because, there are more chars left 
+                    dfs(r.right,0); //outside of the left  calls window. 
                 }else{
                     dfs(r.left,start);
-                }
+                } 
             } // right case 
             else if(j>r.leftCount &&r.right !== null){
                   dfs(r.right,start-r.leftCount); // postion of char is in
@@ -207,8 +348,6 @@ export class Rope{
                 let len: number = subString.length;
                 let end: number = start + Math.min(charLeft,len-start);
                 charLeft -= (end-start); 
-                console.log("new charLeft: " +charLeft);
-                console.log("substring being added: " + subString.slice(start,end));
                 partitions.push(subString.slice(start,end));
             }
             else{
@@ -216,7 +355,6 @@ export class Rope{
             }
         }
         dfs(this,i);
-        console.log("final charLeft: " +charLeft);
         return partitions.join("");
     }
 
