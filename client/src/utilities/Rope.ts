@@ -1,20 +1,16 @@
 import { EmptyRopeException } from '../exceptions/utilities/EmptyRopeException';
 import { IndexNotInRopeException } from '../exceptions/utilities/IndexNotInRopeException';
 import { InvalidRageForRopeException } from '../exceptions/utilities/InvalidRageForRopeException';
+import { MaxLengthException } from '../exceptions/utilities/MaxLengthException';
+import {MAX_LENGTH,REBALANCE_COEFFICENT} from './constants';
 
 export class Rope{
-    // Maxmum length that a substring should be allowed
-    // so that it can reduce the overall depth of the tree 
-    // as well as keeping making concatenating and deleting 
-    // in log(n) time.
-    static MAX_LENGTH: number = 512; 
+
     // This is the max depth the rope should ever allowed to be
     // given that it would take an extrem amount of memory and no one 
     // would ever need a text editor with that many charcters. 
     static MAX_DEPTH: number =40; 
-    //Increases threshold by 50% before the rope has to rebalance.
-    static REBALANCE_THRESHOLD_COEFFICENT: number =1.5; 
-
+    
     private _left: Rope | null;
     private _right: Rope | null;
     private _leftCount: number=0;
@@ -28,7 +24,12 @@ export class Rope{
             this._left = null;
             this._right= null;
             this._substring = leftOrSubstring;
-            this._leftCount = leftOrSubstring.length;
+            if(leftOrSubstring.length <= MAX_LENGTH){
+                this._leftCount = leftOrSubstring.length;
+            }
+            else{
+                throw new MaxLengthException(leftOrSubstring.length);
+            }
         }
         else{
             this._left= leftOrSubstring;
@@ -114,14 +115,15 @@ export class Rope{
      * Finds the ith postion charcter in the rope. 
      * @param {number} i 
      * @returns {string}
+     * @throws {IndexNotInRopeException}
      */
-    search(i:number){ 
+    search(i:number): string{ 
         /**
          * @param {Rope}r
          * @param {number} j
          * @returns {string}
          */
-        function dfs(r:Rope,j:number){ 
+        function dfs(r:Rope,j:number):string{ 
             // left case 
             if (j <r.leftCount &&r.left !== null){ 
                 return dfs(r.left,j);
@@ -131,11 +133,9 @@ export class Rope{
             } // relation tor.right is j-s.leftCount
             else if (r.left === null && r.right === null 
                 &&r.substring !== null && j<r.leftCount && j >=0){
-                return r.substring[j];
+                return r.substring[j]!;
             }
-            else{
-                throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
-            }
+            throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
         }
         return dfs(this,i);
     }
@@ -145,18 +145,19 @@ export class Rope{
      * @param {Rope | null} r 
      * @returns {Rope}
      */
-    concatiante(r: Rope | null){ // check that if 
+    concatenate(r: Rope | null): Rope{ // check that if 
 
         if( r !== null){
             let newLeftCount: number = this.length; 
             let newDepth: number = Math.max(this.depth,r.depth) +1;
             let newRope: Rope = new Rope(this,r);
             newRope.leftCount = newLeftCount;
+            newRope.depth = newDepth;
 
             let totalCount: number =  newLeftCount + r.length;
-            if(newDepth < Rope.REBALANCE_THRESHOLD_COEFFICENT* Math.log2(totalCount)){
+            if(newDepth < REBALANCE_COEFFICENT* Math.log2(totalCount)){
                 
-                return newRope
+                return newRope;
             }
             else{
                 return this.rebalance(newRope);
@@ -172,16 +173,16 @@ export class Rope{
      * @param r 
      * @returns {Rope}
      */
-    private rebalance(r: Rope){
+    rebalance(r: Rope): Rope{
         let substrings: string[] = [];
 
         /**
          * Takes the given rope and yeilds a list of substrings
          * from all of its leafs.
          * @param currRope 
-         * @returns {string[]}
+         * @returns {void}
          */
-        function listOfSubstrings(currRope:Rope){
+        function listOfSubstrings(currRope:Rope):void{
             if(currRope.left !== null && currRope.right !== null){
                 listOfSubstrings(currRope.left);
                 listOfSubstrings(currRope.right);
@@ -197,14 +198,13 @@ export class Rope{
             }
         }
        
-
         /**
          * Takes the given list of substrings and concatinates each substring 
          * such that the length of each leaf with exception of the last one 
          * contains a substring that is 512 charcters long. 
          * @returns {Rope[]}
          */
-        function createLeafs(){
+        function createLeafs():Rope[]{
             let leafList: Rope[] = [];
 
             let start: number = 0; 
@@ -213,11 +213,13 @@ export class Rope{
 
             for(let end =0; end <substrings.length; end++){
                 let substring:string = substrings[end]!;
-                if(Rope.MAX_LENGTH -count > substring.length){
+                if(MAX_LENGTH -count > substring.length && end !== substrings.length-1){
                     count += substring.length;  
                 }
                 else{
-                    let endSub: number = Rope.MAX_LENGTH -count 
+                    console.log("start: "+ start);
+                    console.log("end: " + end);
+                    let endSub: number = MAX_LENGTH -count 
                     let resultString: string;
 
                     // case in which start and end are in the same substring
@@ -225,11 +227,12 @@ export class Rope{
                         resultString = substring[start]!.slice(startSub,endSub);
                     }
                     else{ // slices the start partition, then everything in middle
-                         // and then it finalizes with the end peice of the string. 
+                         // ,and then it finalizes with the end peice of the string. 
+                        //  console.log(`substring at ${end}: ${substrings[end]}`)
                          resultString =[
-                        substring[start]!.slice(startSub),
+                        substrings[start]!.slice(startSub),
                       ... (end-start > 1 ? substrings.slice(start+1,end) : ""),
-                      substring[end]!.slice(0,endSub)].join("");
+                      substrings[end]!.slice(0,endSub)].join("");
                     }
                      
                     leafList.push(new Rope(resultString));
@@ -239,6 +242,11 @@ export class Rope{
                     count = 0; 
                 }
             }
+            // console.log("leaflist length " +leafList.length);
+            // console.log("list of substrings: ");
+            leafList.forEach((leaf) => {
+                console.log(`depth: ${leaf.string}`);
+            });
             return leafList;
         }
 
@@ -248,23 +256,27 @@ export class Rope{
          * @param ropeList 
          * @returns {Rope}
          */
-        function createBalancedRope(ropeList: Rope[]){
-            if(ropeList.length == 2){
-                return combine(ropeList[0]!,ropeList[1]!);
+        function createBalancedRope(ropeList: Rope[]): Rope{
+            if(ropeList.length === 1){
+                return ropeList[0]!;
             }
 
-            const SIZE = Math.ceil(ropeList.length/2); 
+            const SIZE = Math.floor(ropeList.length/2); 
             let parentRopeList: Rope[] = Array(SIZE).fill(null);
             let j: number = 0; 
-            for(let i = 0; i< ropeList.length; i+=2){
+            
+            for(let i = 0; i< ropeList.length-1; i+=2){
+                // console.log(`right value in loop: ${ropeList[i+1]!}`)
                 parentRopeList[j] = combine(ropeList[i]!,ropeList[i+1]!);
                 j+=1;
             }
 
-            if (ropeList.length % 2 === 1) parentRopeList[SIZE-1] = 
-            combine(parentRopeList.at(-1)!,ropeList.at(-1)!);
+            if (ropeList.length % 2 === 1) {
+                // console.log(`right value in loop: ${ropeList.at(-1)!}`)
+                parentRopeList[SIZE-1] = 
+            combine(parentRopeList.at(-1)!,ropeList.at(-1)!);}
 
-            createBalancedRope(parentRopeList);
+            return createBalancedRope(parentRopeList);
         }
 
         /**
@@ -273,17 +285,21 @@ export class Rope{
          * @param r2 
          * @returns {Rope}
          */
-        function combine(r1:Rope,r2:Rope){
+        function combine(r1:Rope,r2:Rope) :Rope{
+            // console.log(r2.substring)
             let newRope: Rope = new Rope(r1,r2);
             newRope.leftCount =  r1.length;
-            newRope.depth = Math.max(r1.depth,r2.depth) +1;
+            // console.log(`depth of left node: ${r1.depth!}`);
+            newRope.depth = Math.max(r1.depth!,r2.depth!) +1;
             return newRope;
         }
-        
+
         listOfSubstrings(r);
+        // substrings.forEach((substring) => {
+        //     console.log(substring);
+        // });
         return createBalancedRope(createLeafs());
     }
-
 
     /**
      * Cuts the given rope into two ropes: 
@@ -321,7 +337,7 @@ export class Rope{
      * @param {number} j 
      * @returns {string}
      */
-    report(i:number,j:number){
+    report(i:number,j:number):string{
         let partitions: string[] = [];
         let charLeft: number = j-i +1;
         if (charLeft <= 0)  throw new InvalidRageForRopeException(i, j);
@@ -358,4 +374,31 @@ export class Rope{
         return partitions.join("");
     }
 
+    /**
+     * Performs DFS and prints all node
+     * @returns {void}
+     */
+    printAll(): void{
+        function dfs(r:Rope){
+            if (r.substring !== null){
+                console.log(`substring: ${r.substring} |leftCount: ${r.leftCount} |depth: ${r.depth}|`);
+            }
+            else{
+                 console.log(`leftCount: ${r.leftCount} |depth: ${r.depth}|`);
+            }
+
+            if(r.left !== null && r.right !== null){
+                dfs(r.left);
+                dfs(r.right);
+            }
+            else if(r.left !== null){
+                dfs(r.left);
+            }
+            else if (r.right !== null){
+                dfs(r.right);
+            }
+        }
+
+        dfs(this);
+    }
 }   

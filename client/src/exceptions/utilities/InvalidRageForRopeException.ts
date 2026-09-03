@@ -1,5 +1,3 @@
-
-
 export class InvalidRageForRopeException extends Error{
     a: number; 
     b: number; 
