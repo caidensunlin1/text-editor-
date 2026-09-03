@@ -2,6 +2,7 @@ import { IndexNotInRopeException } from '../../src/exceptions/utilities/IndexNot
 import {Rope} from '../../src/utilities/Rope';
 import { expect, test, describe} from '@jest/globals';
 import { makeUnbalancedTree, makeUnbalancedTreeWithLargeStrings, populateBigRope } from './RopeTestHelper';
+import { MAX_LENGTH, REBALANCE_COEFFICENT } from '../../src/utilities/constants';
 
 describe("Test Search", ()=> {
     test("search finds correct value",search_finds_correct_value),
@@ -75,7 +76,22 @@ function concatenate_makes_balanced_trees(){
 
 function concatenate_makes_leafs_equal_to_the_max_length(){
     let unbalancedRope: Rope = makeUnbalancedTreeWithLargeStrings();
-    unbalancedRope.printAll();
+    const len: number = unbalancedRope.length;
+
+    expect(unbalancedRope.leafTotal).toBe(4);
+    expect(unbalancedRope.leftCount).toBe(1024);
+    expect(len).toBe(MAX_LENGTH*3 + 146 + Math.ceil(REBALANCE_COEFFICENT * Math.log2(len))-3);
+
+    let L1: Rope |null|undefined= unbalancedRope.left?.left;
+    let L2: Rope |null|undefined= unbalancedRope.left?.right;
+    let L3: Rope |null|undefined= unbalancedRope.right?.left;
+    let L4: Rope |null|undefined= unbalancedRope.right?.right;
+    
+    expect(L1?.leftCount).toBe(MAX_LENGTH);
+    expect(L2?.leftCount).toBe(MAX_LENGTH);
+    expect(L3?.leftCount).toBe(MAX_LENGTH);
+    expect(L4?.leftCount).toBe(len%MAX_LENGTH);
+
 }
 
 describe("Test Report", ()=> {
@@ -113,3 +129,14 @@ function report_IndexNotInRopeException(){
     expect(()=> bigRope.report(100,1000)).toThrow(IndexNotInRopeException);
 }
 
+describe("Test leafTotal", ()=> {
+    test("leafTotal is correct",leaf_count_is_correct)
+});
+
+function leaf_count_is_correct(){
+    let unbalancedRope: Rope = makeUnbalancedTree();
+    expect(unbalancedRope.leafTotal).toBe(1);
+
+    let bigRope: Rope = populateBigRope();
+    expect(bigRope.leafTotal).toBe(6);
+}

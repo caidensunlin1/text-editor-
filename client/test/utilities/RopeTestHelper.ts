@@ -38,12 +38,21 @@ export function populateBigRope(): Rope{
  * => 7 >2log(11) => 7 >6.92, so we rebalance. So it should end 
  * up as a single node: (11) | "hello_world".
  */
-export function makeUnbalancedTree(){
+export function makeUnbalancedTree() :Rope{
     let s: string[] = ["h","e","l","l","o","_","wor","ld"];
     let r: Rope = concatenateAllRopes(s);
-    return r
+    return r;
 }
 
+
+/**
+ * Should end up with a tree with 4 leafs and should look like:
+ *                         (1028)
+ *                      /         \
+ *                   (512)           (512)
+ *                  /    \        /         \
+ *            (L1|512)  (L2|512) (L3|512)  (L4|146)
+ */
 export function makeUnbalancedTreeWithLargeStrings() :Rope{
     let s: string[] = [randomString(455),randomString(395),
         randomString(457),randomString(375)];
@@ -56,6 +65,7 @@ export function makeUnbalancedTreeWithLargeStrings() :Rope{
     }
     return r;
 }
+
 
 function randomString(len:number): string{
     let str: String[] = Array(len).fill(null);
@@ -71,9 +81,8 @@ function randomChoice(str:string): string{
 
 function concatenateAllRopes(ropes: string[]): Rope{
     let r: Rope = new Rope(ropes[0]!);
-    for(let i=1; i<ropes.length-1;i++)
-        r.concatenate(new Rope(ropes[i]!));
-    
+    for(let i=1; i<ropes.length;i++)
+        r= r.concatenate(new Rope(ropes[i]!));
     return r;
 }
 

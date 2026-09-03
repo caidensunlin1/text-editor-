@@ -39,24 +39,23 @@ export class Rope{
         }
     }
 
-    get left(){
+    get left(): Rope| null{
         return this._left;
     }
 
-    get right(){
+    get right(): Rope| null{
         return this._right;
     }
 
-
-    get leftCount(){
+    get leftCount(): number{
         return this._leftCount;
     }
 
-    get substring(){
+    get substring(): string | null{
         return this._substring;
     }
 
-    get depth(){
+    get depth(): number{
         return this._depth;
     }
 
@@ -64,7 +63,7 @@ export class Rope{
      * Returns the entire string that the rope holds.
      * @returns {string}
      */
-    get string(){
+    get string(): string{
         return this.report(0,this.length-1)
     }
 
@@ -72,7 +71,7 @@ export class Rope{
      *  Returns the entire length of the string that the rope contains.
      * @returns {number}
      */
-    get length(){
+    get length(): number{
         let sum:number = this.leftCount;
         if(this.left !== null) {
             dfsSum(this.right);
@@ -89,6 +88,17 @@ export class Rope{
             } 
         }
         return sum;
+    }
+
+    get leafTotal(): number{
+        function dfs(r:Rope | null) : number{
+            if(r === null) return 0;
+            if(r.left === null && r.right === null) return 1;
+
+            return dfs(r.left) + dfs(r.right);
+            
+        }
+        return dfs(this);
     }
 
     private set left(left: Rope | null){
@@ -217,8 +227,10 @@ export class Rope{
                     count += substring.length;  
                 }
                 else{
-                    console.log("start: "+ start);
-                    console.log("end: " + end);
+                    // console.log();
+                    // console.log("start: "+ start);
+                    // console.log("end: " + end);
+                    // console.log();
                     let endSub: number = MAX_LENGTH -count 
                     let resultString: string;
 
@@ -234,19 +246,26 @@ export class Rope{
                       ... (end-start > 1 ? substrings.slice(start+1,end) : ""),
                       substrings[end]!.slice(0,endSub)].join("");
                     }
-                     
+                    
                     leafList.push(new Rope(resultString));
 
-                    start = end+1; 
-                    startSub = endSub +1 < substring.length-1 ? endSub:0;
-                    count = 0; 
+                    if(endSub +1 < substring.length-1){ // Part of the substring hasen't been added yet.
+                        startSub = endSub; 
+                        count = substring.length - endSub;
+                        start = end; 
+                    }
+                    else{
+                        start = end+1;
+                        startSub = 0;
+                        count = 0;
+                    }
                 }
             }
             // console.log("leaflist length " +leafList.length);
             // console.log("list of substrings: ");
-            leafList.forEach((leaf) => {
-                console.log(`depth: ${leaf.string}`);
-            });
+            // leafList.forEach((leaf) => {
+            //     console.log(`depth: ${leaf.string}`);
+            // });
             return leafList;
         }
 
@@ -295,6 +314,7 @@ export class Rope{
         }
 
         listOfSubstrings(r);
+        // console.log("printing out the list of substrings: ")
         // substrings.forEach((substring) => {
         //     console.log(substring);
         // });
