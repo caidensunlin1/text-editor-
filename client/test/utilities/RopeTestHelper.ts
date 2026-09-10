@@ -1,4 +1,4 @@
-import { REBALANCE_COEFFICENT } from "../../src/utilities/constants";
+import { REBALANCE_COEFFICENT } from "../../src/utilities/Constants";
 import { Rope } from "../../src/utilities/Rope";
 
 const asciiLetters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -65,7 +65,6 @@ export function makeUnbalancedTreeWithLargeStrings() :Rope{
     }
     return r;
 }
-
 
 function randomString(len:number): string{
     let str: String[] = Array(len).fill(null);

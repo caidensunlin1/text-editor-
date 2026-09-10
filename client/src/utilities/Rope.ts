@@ -2,7 +2,9 @@ import { EmptyRopeException } from '../exceptions/utilities/EmptyRopeException';
 import { IndexNotInRopeException } from '../exceptions/utilities/IndexNotInRopeException';
 import { InvalidRageForRopeException } from '../exceptions/utilities/InvalidRageForRopeException';
 import { MaxLengthException } from '../exceptions/utilities/MaxLengthException';
-import {MAX_LENGTH,REBALANCE_COEFFICENT} from './constants';
+import { NegativeIndexException } from '../exceptions/utilities/NegativeIndexException';
+import { MAX_LENGTH, REBALANCE_COEFFICENT } from './Constants';
+
 
 export class Rope{
 
@@ -25,7 +27,7 @@ export class Rope{
             this._right= null;
             this._substring = leftOrSubstring;
             if(leftOrSubstring.length <= MAX_LENGTH){
-                this._leftCount = leftOrSubstring.length;
+                this._leftCount = leftOrSubstring.length; 
             }
             else{
                 throw new MaxLengthException(leftOrSubstring.length);
@@ -155,8 +157,7 @@ export class Rope{
      * @param {Rope | null} r 
      * @returns {Rope}
      */
-    concatenate(r: Rope | null): Rope{ // check that if 
-
+    concatenate(r: Rope | null): Rope{ 
         if( r !== null){
             let newLeftCount: number = this.length; 
             let newDepth: number = Math.max(this.depth,r.depth) +1;
@@ -170,7 +171,7 @@ export class Rope{
                 return newRope;
             }
             else{
-                return this.rebalance(newRope);
+                return Rope.rebalance(newRope);
             }
         }
         else{
@@ -179,167 +180,48 @@ export class Rope{
     }
 
     /**
-     * 
-     * @param r 
-     * @returns {Rope}
-     */
-    rebalance(r: Rope): Rope{
-        let substrings: string[] = [];
-
-        /**
-         * Takes the given rope and yeilds a list of substrings
-         * from all of its leafs.
-         * @param currRope 
-         * @returns {void}
-         */
-        function listOfSubstrings(currRope:Rope):void{
-            if(currRope.left !== null && currRope.right !== null){
-                listOfSubstrings(currRope.left);
-                listOfSubstrings(currRope.right);
-            }
-            else if(currRope.left !== null){
-                listOfSubstrings(currRope.left);
-            }
-            else if (currRope.right !== null){
-                listOfSubstrings(currRope.right);
-            }
-            else if (currRope.string !== null){
-                substrings.push(currRope.string);
-            }
-        }
-       
-        /**
-         * Takes the given list of substrings and concatinates each substring 
-         * such that the length of each leaf with exception of the last one 
-         * contains a substring that is 512 charcters long. 
-         * @returns {Rope[]}
-         */
-        function createLeafs():Rope[]{
-            let leafList: Rope[] = [];
-
-            let start: number = 0; 
-            let startSub: number = 0; 
-            let count: number = 0; 
-
-            for(let end =0; end <substrings.length; end++){
-                let substring:string = substrings[end]!;
-                if(MAX_LENGTH -count > substring.length && end !== substrings.length-1){
-                    count += substring.length;  
-                }
-                else{
-                    // console.log();
-                    // console.log("start: "+ start);
-                    // console.log("end: " + end);
-                    // console.log();
-                    let endSub: number = MAX_LENGTH -count 
-                    let resultString: string;
-
-                    // case in which start and end are in the same substring
-                    if(start === end){
-                        resultString = substring[start]!.slice(startSub,endSub);
-                    }
-                    else{ // slices the start partition, then everything in middle
-                         // ,and then it finalizes with the end peice of the string. 
-                        //  console.log(`substring at ${end}: ${substrings[end]}`)
-                         resultString =[
-                        substrings[start]!.slice(startSub),
-                      ... (end-start > 1 ? substrings.slice(start+1,end) : ""),
-                      substrings[end]!.slice(0,endSub)].join("");
-                    }
-                    
-                    leafList.push(new Rope(resultString));
-
-                    if(endSub +1 < substring.length-1){ // Part of the substring hasen't been added yet.
-                        startSub = endSub; 
-                        count = substring.length - endSub;
-                        start = end; 
-                    }
-                    else{
-                        start = end+1;
-                        startSub = 0;
-                        count = 0;
-                    }
-                }
-            }
-            // console.log("leaflist length " +leafList.length);
-            // console.log("list of substrings: ");
-            // leafList.forEach((leaf) => {
-            //     console.log(`depth: ${leaf.string}`);
-            // });
-            return leafList;
-        }
-
-        /**
-         * Takes the list of ropes and combines them from the leaf level and
-         * works its way up until it eachs the first level. 
-         * @param ropeList 
-         * @returns {Rope}
-         */
-        function createBalancedRope(ropeList: Rope[]): Rope{
-            if(ropeList.length === 1){
-                return ropeList[0]!;
-            }
-
-            const SIZE = Math.floor(ropeList.length/2); 
-            let parentRopeList: Rope[] = Array(SIZE).fill(null);
-            let j: number = 0; 
-            
-            for(let i = 0; i< ropeList.length-1; i+=2){
-                // console.log(`right value in loop: ${ropeList[i+1]!}`)
-                parentRopeList[j] = combine(ropeList[i]!,ropeList[i+1]!);
-                j+=1;
-            }
-
-            if (ropeList.length % 2 === 1) {
-                // console.log(`right value in loop: ${ropeList.at(-1)!}`)
-                parentRopeList[SIZE-1] = 
-            combine(parentRopeList.at(-1)!,ropeList.at(-1)!);}
-
-            return createBalancedRope(parentRopeList);
-        }
-
-        /**
-         * Here for optimzation purposes 
-         * @param r1 
-         * @param r2 
-         * @returns {Rope}
-         */
-        function combine(r1:Rope,r2:Rope) :Rope{
-            // console.log(r2.substring)
-            let newRope: Rope = new Rope(r1,r2);
-            newRope.leftCount =  r1.length;
-            // console.log(`depth of left node: ${r1.depth!}`);
-            newRope.depth = Math.max(r1.depth!,r2.depth!) +1;
-            return newRope;
-        }
-
-        listOfSubstrings(r);
-        // console.log("printing out the list of substrings: ")
-        // substrings.forEach((substring) => {
-        //     console.log(substring);
-        // });
-        return createBalancedRope(createLeafs());
-    }
-
-    /**
      * Cuts the given rope into two ropes: 
      * r1 from [0,i] and r2 from (i,n-1]. Then 
      * it returns an array of the two given ropes. 
      * @param {number} i 
-     * @returns {Array<Rope>}
+     * @returns {Rope[]}
      */
-    split(i:number){
-
+    split(i:number): [Rope|null,Rope|null]{
+        if(i<0) throw new NegativeIndexException(i);
+        // Makes a shallow copy of the root of the root. 
+        const leftRope: Rope| null = Object.assign(Object.create(Rope.prototype),this);
+        let rightPeices: Rope[] =[];
+    
+        if(leftRope !== null)  {Rope.addLeafs(leftRope,i,rightPeices); Rope.compression(leftRope);}
+        const rightRope: Rope| null = Rope.unifyRight(rightPeices);
+        
+        return [leftRope,rightRope];
     }
-
+    
     /**
      * Places the new given Rope at the ith index. 
      * @param {number} i 
      * @param {Rope} s 
      * @returns {void}
      */
-    insert(i:number,r: Rope | null){
-
+    insert(i:number,r3: Rope | null): Rope{
+        const ropeSplit: [Rope|null,Rope|null] = this.split(i);
+        let r1: Rope| null = ropeSplit[0];
+        let r2: Rope| null = ropeSplit[1];
+        
+        if(r1 !== null && r3 !== null){
+            if(r2 !== null){
+                r1 = Rope.combineWithLeftCount(r1,r3); // so it doesn't have to reblance twice potentially.
+                r1.concatenate(r2);
+            }
+            else{
+                r1.concatenate(r3);
+            }
+            return r1; 
+        }
+        else{
+            throw new EmptyRopeException();
+        }
     }
 
     /**
@@ -347,8 +229,22 @@ export class Rope{
      * @param {number} i 
      * @param {number} j 
      */
-    delete(i:number,j:number){
+    delete(i:number,j:number): Rope{
+        if (j-i <= 0)  throw new InvalidRageForRopeException(i, j);
+        if (i <0) throw new NegativeIndexException(i);
+        if (j< 0) throw new NegativeIndexException(j);
 
+        const firstSplit: [Rope|null,Rope|null] = this.split(i);
+        let r1: Rope| null = firstSplit[0];
+        let r2: Rope |null = firstSplit[1];
+        if(r1 === null || r2 === null) throw new EmptyRopeException(); 
+        
+        const secondSplit: [Rope|null,Rope|null] = r2.split(j);
+        if(secondSplit[0] === null || secondSplit[1] === null) throw new EmptyRopeException(); 
+        let r4: Rope = secondSplit[1];
+        
+        r1.concatenate(r4);
+        return r1; 
     }
 
     /**
@@ -361,7 +257,9 @@ export class Rope{
         let partitions: string[] = [];
         let charLeft: number = j-i +1;
         if (charLeft <= 0)  throw new InvalidRageForRopeException(i, j);
-        
+        if (i <0) throw new NegativeIndexException(i);
+        if (j< 0) throw new NegativeIndexException(j);
+
         function dfs(r:Rope,start:number){
             // left case 
             if (start <r.leftCount &&r.left !== null){ 
@@ -418,7 +316,288 @@ export class Rope{
                 dfs(r.right);
             }
         }
-
         dfs(this);
     }
+
+    /**
+     * This reconstructs a balanced rope when the given thresold of REBALANCE_COEFFICENT*log(n)
+     * is broken from a rope being concatnated. 
+     * @param r 
+     * @returns {Rope}
+     * @interal 
+     * {@link concatenate}
+     */
+    private static rebalance(r: Rope): Rope{
+        let substrings: string[] = [];
+
+        Rope.listOfSubstrings(r,substrings);
+        
+        return Rope.createBalancedRope(Rope.createLeafs(substrings));
+    }
+
+    /**
+     * Takes the given rope and yeilds a list of substrings
+     * from all of its leafs. 
+     * @internal 
+     * @param currRope 
+     * @returns {void}
+     * {@link rebalance}
+     */
+    private static listOfSubstrings(currRope:Rope, substrings: string[]):void{
+        if(currRope.left !== null && currRope.right !== null){
+            this.listOfSubstrings(currRope.left,substrings);
+            this.listOfSubstrings(currRope.right,substrings);
+        }
+        else if(currRope.left !== null){
+            this.listOfSubstrings(currRope.left,substrings);
+        }
+        else if (currRope.right !== null){
+            this.listOfSubstrings(currRope.right,substrings);
+        }
+        else if (currRope.string !== null){
+            substrings.push(currRope.string);
+        }
+    }
+
+    /**
+     * Takes the given list of substrings and concatinates each substring 
+     * such that the length of each leaf with exception of the last one 
+     * contains a substring that is 512 charcters long. 
+     * @returns {Rope[]}
+     * @internal 
+     * {@link rebalance}
+     */
+    private static createLeafs(substrings: string[]):Rope[]{
+        let leafList: Rope[] = [];
+
+        let start: number = 0; 
+        let startSub: number = 0; 
+        let count: number = 0; 
+
+        for(let end =0; end <substrings.length; end++){
+            let substring:string = substrings[end]!;
+            if(MAX_LENGTH -count > substring.length && end !== substrings.length-1){// adds substring
+                count += substring.length;  
+            }
+            else{ // makes leaf node having the substring from [start[startSub],end[endSub]]
+                // with endsub being exclusive. 
+
+                let endSub: number = MAX_LENGTH -count 
+                let resultString: string;
+
+                // case in which start and end are in the same substring
+                if(start === end){
+                    resultString = substring[start]!.slice(startSub,endSub);
+                }
+                else{ // slices the start partition, then everything in middle
+                        // ,and then it finalizes with the end peice of the string. 
+                    //  console.log(`substring at ${end}: ${substrings[end]}`)
+                        resultString =[
+                    substrings[start]!.slice(startSub),
+                    ... (end-start > 1 ? substrings.slice(start+1,end) : ""),
+                    substrings[end]!.slice(0,endSub)].join("");
+                }
+                
+                leafList.push(new Rope(resultString));
+
+                if(endSub +1 < substring.length-1){ // Part of the substring hasen't been added yet.
+                    startSub = endSub; 
+                    count = substring.length - endSub;
+                    start = end; 
+                } // entire substring has been added. 
+                else{
+                    start = end+1;
+                    startSub = 0;
+                    count = 0;
+                }
+            }
+        }
+        return leafList;
+    }
+
+    /**
+     * Takes the list of ropes and combines them from the leaf level and
+     * works its way up until it eachs the first level. 
+     * @param ropeList 
+     * @returns {Rope}
+     * @internal 
+     * {@link rebalance}
+     */
+    private static createBalancedRope(ropeList: Rope[]): Rope{ 
+        if(ropeList.length === 1){                        
+            let balancedRope: Rope = ropeList[0]!;
+            Rope.LeftSumForEachNode(balancedRope);
+            return balancedRope;
+        }
+
+        const SIZE = Math.floor(ropeList.length/2); 
+        let parentRopeList: Rope[] = Array(SIZE).fill(null);
+        let j: number = 0; 
+        
+        for(let i = 0; i< ropeList.length-1; i+=2){
+            parentRopeList[j] = Rope.combine(ropeList[i]!,ropeList[i+1]!);
+            j+=1;
+        }
+
+        if (ropeList.length % 2 === 1) parentRopeList[SIZE-1] = 
+            Rope.combine(parentRopeList.at(-1)!,ropeList.at(-1)!);
+
+        return Rope.createBalancedRope(parentRopeList);
+    }
+
+    /**
+     * Here for optimzation purposes to combine two ropes without 
+     * accounting for leftCount. 
+     * @param r1 
+     * @param r2 
+     * @returns {Rope}
+     */
+    private static combine(r1:Rope,r2:Rope) :Rope{
+        let newRope: Rope = new Rope(r1,r2);
+        newRope.depth = Math.max(r1.depth!,r2.depth!) +1;
+        return newRope;
+    }
+
+    /**
+     * Accounts for leftCount. 
+     * @param r1 
+     * @param r2 
+     * @returns {Rope}
+     */
+    private static combineWithLeftCount(r1:Rope,r2:Rope) :Rope{
+        let newRope: Rope = new Rope(r1,r2);
+        newRope.leftCount =  r1.length; 
+        newRope.depth = Math.max(r1.depth!,r2.depth!) +1;
+        return newRope;
+    }
+
+    /**
+     * Computes the leftCount for each node in O(n) time. 
+     * @internal 
+     * {@link rebalance}
+     */
+    public static LeftSumForEachNode(r:Rope): void{
+        let stack: number[] = [];
+
+        /**
+         * Traverses the rope, and adds up the leafCount when popping up. 
+         * @param rope 
+         * @returns {void}
+         */
+        function dfs(rope:Rope| null){
+            if( rope === null){
+                return
+                }
+            else if(rope.left === null && rope.right === null){
+                stack.push(rope.leftCount);
+            }
+            dfs(rope.left);
+            rope.leftCount = stack[stack.length-1]!;
+            dfs(rope.right);
+            add(stack.length);
+        }
+
+        function add(len:number):void{
+            if(len >=2){
+                let top: number = stack.pop()!;
+                stack[len-2]!+= top; 
+            }
+        }
+
+        dfs(r.left);
+        add(stack.length);
+        if(stack.length)  r.leftCount = stack.pop()!;
+        dfs(r.right);
+    }
+
+     /**
+     * Adds the leafs that belong to the leftRope, and sets the nodes 
+     * that do not belong to the leftRope to null. While also adding the right children 
+     * to the rightPeices with the last part of the strings being added first. 
+     * @param r 
+     * @param j 
+     * @internal 
+     * {@link split}
+     */
+    private static addLeafs(r:Rope,i:number,rightPeices: Rope[]){
+
+        function dfs(cur:Rope,j:number){
+            // left case 
+            if (j <cur.leftCount &&cur.left !== null){ 
+                if(cur.right !== null) rightPeices.push(cur.right);
+                cur.left = Object.assign(Object.create(Rope.prototype),cur.left);
+                cur.right = null; 
+                dfs(cur.left!,j);
+            } // right case 
+            else if(j>cur.leftCount &&cur.right !== null){
+                cur.right = Object.assign(Object.create(Rope.prototype),cur.right);
+                dfs(cur.right!,j-cur.leftCount); // postion of char is in
+            } // relation tocur.right is j-s.leftCount
+            else if (cur.left === null && cur.right === null 
+                &&cur.substring !== null && j<cur.leftCount && j >=0){
+                if(j === cur.leftCount-1){ // case in which i contains the whole substring
+                    r= Object.assign(Object.create(Rope.prototype),r);
+                }
+                else{ // case in which the substring contains 
+                    const s1: string = cur.substring.slice(0,j+1);
+                    const s2: string = cur.substring.slice(j,cur.leftCount);
+                    r = Object.assign(Object.create(Rope.prototype),new Rope(s1));
+                    rightPeices.push(new Rope(s2));
+                }
+            }
+            throw new IndexNotInRopeException(i,j,cur.substring?.length ??0);
+        }
+        dfs(r,i);
+    }
+
+    /**
+     * Goes back and removes the unessary nodes from the left node, while 
+     * also updating the leftCount of the root if nessary.
+     * @param r 
+     * @internal 
+     * {@link split}
+     */
+    private static compression(r: Rope): void{
+        let next: Rope|null = (r.right === null)? r.left: r.right; 
+        let updateRoot: boolean; 
+
+        if(r.right === null){
+            next = r.left; 
+            updateRoot = true;
+        }
+        else{
+            next = r.right; 
+            updateRoot = false; 
+        }
+
+        // nothing to do if its null 
+        if(next === null) return; 
+
+        function dfs(curr:Rope){
+            if(curr.right !== null){
+                dfs(curr.right);
+            }
+            else if(curr.left !== null){ // removes unessary node. 
+                curr = Object.assign(Object.create(Rope.prototype),r.left);
+                dfs(curr);
+            }
+        }
+        dfs(next);
+
+        if(updateRoot) r.leftCount = r.length;
+    }
+
+    /**
+     * Takes the right peices of the right Rope and returns one given rope. 
+     * @returns {Rope |null}
+     * @internal 
+     * {@link split}
+     */
+    private static unifyRight(rightPeices: Rope[]): Rope |null{
+        while(rightPeices.length >=2) 
+            rightPeices[rightPeices.length-2] = 
+            this.combineWithLeftCount(rightPeices[rightPeices.length-2]!,rightPeices.pop()!);  
+        return (rightPeices.length === 1)? rightPeices.pop()!: null;
+    }   
+
 }   

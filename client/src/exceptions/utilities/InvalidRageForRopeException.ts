@@ -6,5 +6,6 @@ export class InvalidRageForRopeException extends Error{
         super(`Starting index: ${a} is greater than ending index: ${b}.`);
         this.a = a;
         this.b = b; 
+        Object.freeze(this);
     }
 }
