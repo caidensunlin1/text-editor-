@@ -6,7 +6,7 @@ import { areRopesEqual, makeUnbalancedTree,
 import { MAX_LENGTH, REBALANCE_COEFFICENT } from '../../src/utilities/Constants';
 import { NegativeIndexException } from '../../src/exceptions/utilities/NegativeIndexException';
 import { InvalidRageForRopeException } from '../../src/exceptions/utilities/InvalidRageForRopeException';
-import { EmptyRopeException } from '../../src/exceptions/utilities/EmptyRopeException';
+
 
 
 describe("Test Search", ()=> {
