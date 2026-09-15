@@ -140,7 +140,7 @@ export class Rope{
             if (j <r.leftCount &&r.left !== null){ 
                 return dfs(r.left,j);
             } // right case 
-            else if(j>r.leftCount &&r.right !== null){
+            else if(j>=r.leftCount &&r.right !== null){
                 return dfs(r.right,j-r.leftCount); // postion of char is in
             } // relation tor.right is j-s.leftCount
             else if (r.left === null && r.right === null 
@@ -179,147 +179,7 @@ export class Rope{
         }
     }
 
-    /**
-     * Cuts the given rope into two ropes: 
-     * r1 from [0,i] and r2 from (i,n-1]. Then 
-     * it returns an array of the two given ropes. 
-     * @param {number} i 
-     * @returns {Rope[]}
-     */
-    split(i:number): [Rope|null,Rope|null]{
-        if(i<0) throw new NegativeIndexException(i);
-        // Makes a shallow copy of the root of the root. 
-        const leftRope: Rope| null = Object.assign(Object.create(Rope.prototype),this);
-        let rightPeices: Rope[] =[];
-    
-        if(leftRope !== null)  {Rope.addLeafs(leftRope,i,rightPeices); Rope.compression(leftRope);}
-        const rightRope: Rope| null = Rope.unifyRight(rightPeices);
-        
-        return [leftRope,rightRope];
-    }
-    
-    /**
-     * Places the new given Rope at the ith index. 
-     * @param {number} i 
-     * @param {Rope} s 
-     * @returns {void}
-     */
-    insert(i:number,r3: Rope | null): Rope{
-        const ropeSplit: [Rope|null,Rope|null] = this.split(i);
-        let r1: Rope| null = ropeSplit[0];
-        let r2: Rope| null = ropeSplit[1];
-        
-        if(r1 !== null && r3 !== null){
-            if(r2 !== null){
-                r1 = Rope.combineWithLeftCount(r1,r3); // so it doesn't have to reblance twice potentially.
-                r1.concatenate(r2);
-            }
-            else{
-                r1.concatenate(r3);
-            }
-            return r1; 
-        }
-        else{
-            throw new EmptyRopeException();
-        }
-    }
-
-    /**
-     * Removes the string from [i,j].
-     * @param {number} i 
-     * @param {number} j 
-     */
-    delete(i:number,j:number): Rope{
-        if (j-i <= 0)  throw new InvalidRageForRopeException(i, j);
-        if (i <0) throw new NegativeIndexException(i);
-        if (j< 0) throw new NegativeIndexException(j);
-
-        const firstSplit: [Rope|null,Rope|null] = this.split(i);
-        let r1: Rope| null = firstSplit[0];
-        let r2: Rope |null = firstSplit[1];
-        if(r1 === null || r2 === null) throw new EmptyRopeException(); 
-        
-        const secondSplit: [Rope|null,Rope|null] = r2.split(j);
-        if(secondSplit[0] === null || secondSplit[1] === null) throw new EmptyRopeException(); 
-        let r4: Rope = secondSplit[1];
-        
-        r1.concatenate(r4);
-        return r1; 
-    }
-
-    /**
-     * Gives the string from [i,j]. 
-     * @param {number} i 
-     * @param {number} j 
-     * @returns {string}
-     */
-    report(i:number,j:number):string{
-        let partitions: string[] = [];
-        let charLeft: number = j-i +1;
-        if (charLeft <= 0)  throw new InvalidRageForRopeException(i, j);
-        if (i <0) throw new NegativeIndexException(i);
-        if (j< 0) throw new NegativeIndexException(j);
-
-        function dfs(r:Rope,start:number){
-            // left case 
-            if (start <r.leftCount &&r.left !== null){ 
-                if(r.leftCount - start < charLeft && r.right !== null){
-                    dfs(r.left,start);
-                    // right call because, there are more chars left 
-                    dfs(r.right,0); //outside of the left  calls window. 
-                }else{
-                    dfs(r.left,start);
-                } 
-            } // right case 
-            else if(j>r.leftCount &&r.right !== null){
-                  dfs(r.right,start-r.leftCount); // postion of char is in
-                  // relation tor.right is j-s.leftCount
-            } 
-            else if (r.left === null && r.right === null 
-                && r.substring !== null && start<r.leftCount){
-
-                let subString: string = r.substring;
-                let len: number = subString.length;
-                let end: number = start + Math.min(charLeft,len-start);
-                charLeft -= (end-start); 
-                partitions.push(subString.slice(start,end));
-            }
-            else{
-                throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
-            }
-        }
-        dfs(this,i);
-        return partitions.join("");
-    }
-
-    /**
-     * Performs DFS and prints all node
-     * @returns {void}
-     */
-    printAll(): void{
-        function dfs(r:Rope){
-            if (r.substring !== null){
-                console.log(`substring: ${r.substring} |leftCount: ${r.leftCount} |depth: ${r.depth}|`);
-            }
-            else{
-                 console.log(`leftCount: ${r.leftCount} |depth: ${r.depth}|`);
-            }
-
-            if(r.left !== null && r.right !== null){
-                dfs(r.left);
-                dfs(r.right);
-            }
-            else if(r.left !== null){
-                dfs(r.left);
-            }
-            else if (r.right !== null){
-                dfs(r.right);
-            }
-        }
-        dfs(this);
-    }
-
-    /**
+     /**
      * This reconstructs a balanced rope when the given thresold of REBALANCE_COEFFICENT*log(n)
      * is broken from a rope being concatnated. 
      * @param r 
@@ -329,9 +189,7 @@ export class Rope{
      */
     private static rebalance(r: Rope): Rope{
         let substrings: string[] = [];
-
         Rope.listOfSubstrings(r,substrings);
-        
         return Rope.createBalancedRope(Rope.createLeafs(substrings));
     }
 
@@ -339,23 +197,23 @@ export class Rope{
      * Takes the given rope and yeilds a list of substrings
      * from all of its leafs. 
      * @internal 
-     * @param currRope 
+     * @param r 
      * @returns {void}
      * {@link rebalance}
      */
-    private static listOfSubstrings(currRope:Rope, substrings: string[]):void{
-        if(currRope.left !== null && currRope.right !== null){
-            this.listOfSubstrings(currRope.left,substrings);
-            this.listOfSubstrings(currRope.right,substrings);
+    private static listOfSubstrings(r:Rope, substrings: string[]):void{
+        if(r.left !== null && r.right !== null){
+            this.listOfSubstrings(r.left,substrings);
+            this.listOfSubstrings(r.right,substrings);
         }
-        else if(currRope.left !== null){
-            this.listOfSubstrings(currRope.left,substrings);
+        else if(r.left !== null){
+            this.listOfSubstrings(r.left,substrings);
         }
-        else if (currRope.right !== null){
-            this.listOfSubstrings(currRope.right,substrings);
+        else if (r.right !== null){
+            this.listOfSubstrings(r.right,substrings);
         }
-        else if (currRope.string !== null){
-            substrings.push(currRope.string);
+        else if (r.string !== null){
+            substrings.push(r.string);
         }
     }
 
@@ -445,28 +303,18 @@ export class Rope{
         return Rope.createBalancedRope(parentRopeList);
     }
 
+
     /**
      * Here for optimzation purposes to combine two ropes without 
      * accounting for leftCount. 
      * @param r1 
-     * @param r2 
+     * @param r2
+     * @internal
+     * {@link createBalancedRope}
      * @returns {Rope}
      */
     private static combine(r1:Rope,r2:Rope) :Rope{
         let newRope: Rope = new Rope(r1,r2);
-        newRope.depth = Math.max(r1.depth!,r2.depth!) +1;
-        return newRope;
-    }
-
-    /**
-     * Accounts for leftCount. 
-     * @param r1 
-     * @param r2 
-     * @returns {Rope}
-     */
-    private static combineWithLeftCount(r1:Rope,r2:Rope) :Rope{
-        let newRope: Rope = new Rope(r1,r2);
-        newRope.leftCount =  r1.length; 
         newRope.depth = Math.max(r1.depth!,r2.depth!) +1;
         return newRope;
     }
@@ -510,6 +358,38 @@ export class Rope{
         dfs(r.right);
     }
 
+    /**
+     * Cuts the given rope into two ropes: 
+     * r1 from [0,i] and r2 from (i,n-1]. Then 
+     * it returns an array of the two given ropes. 
+     * @param {number} i 
+     * @returns {Rope[]}
+     */
+    split(i:number): [Rope|null,Rope|null]{
+        if(i<0) throw new NegativeIndexException(i);
+        // Makes a shallow copy of the root of the root. 
+        let leftRope: Rope| null = Object.assign(Object.create(Rope.prototype),this);
+        let rightPeices: Rope[] =[];
+    
+         // leftNode can't be null.
+        Rope.addLeafs(leftRope!,i,rightPeices); 
+       
+        if(leftRope!.right !== null ){
+            leftRope!.right =Rope.compression(leftRope!.right);
+            leftRope!.depth = Math.max(leftRope!.right!.depth,leftRope!.left!.depth) +1;
+        }
+        else if(leftRope!.left !== null){
+           leftRope!.left = Rope.compression(leftRope!.left);
+            // updates the leftCount given values may be missing
+           leftRope!.leftCount = leftRope!.left!.length; 
+           leftRope!.depth = leftRope!.left!.depth +1;
+        }
+
+        const rightRope: Rope| null = Rope.unifyRight(rightPeices);
+        
+        return [leftRope,rightRope];
+    }
+    
      /**
      * Adds the leafs that belong to the leftRope, and sets the nodes 
      * that do not belong to the leftRope to null. While also adding the right children 
@@ -526,26 +406,30 @@ export class Rope{
             if (j <cur.leftCount &&cur.left !== null){ 
                 if(cur.right !== null) rightPeices.push(cur.right);
                 cur.left = Object.assign(Object.create(Rope.prototype),cur.left);
-                cur.right = null; 
+                cur.right = null
                 dfs(cur.left!,j);
             } // right case 
-            else if(j>cur.leftCount &&cur.right !== null){
+            else if(j>=cur.leftCount &&cur.right !== null){
                 cur.right = Object.assign(Object.create(Rope.prototype),cur.right);
                 dfs(cur.right!,j-cur.leftCount); // postion of char is in
-            } // relation tocur.right is j-s.leftCount
+            } // relation to cur.right is j-s.leftCount
             else if (cur.left === null && cur.right === null 
                 &&cur.substring !== null && j<cur.leftCount && j >=0){
                 if(j === cur.leftCount-1){ // case in which i contains the whole substring
-                    r= Object.assign(Object.create(Rope.prototype),r);
+                    cur= Object.assign(Object.create(Rope.prototype),cur);
                 }
-                else{ // case in which the substring contains 
+                else{ // case in which 
                     const s1: string = cur.substring.slice(0,j+1);
-                    const s2: string = cur.substring.slice(j,cur.leftCount);
-                    r = Object.assign(Object.create(Rope.prototype),new Rope(s1));
+                    const s2: string = cur.substring.slice(j+1,cur.leftCount);
+                    cur.substring = s1; 
+                    cur.leftCount = s1.length;
                     rightPeices.push(new Rope(s2));
                 }
             }
-            throw new IndexNotInRopeException(i,j,cur.substring?.length ??0);
+            else{
+                throw new IndexNotInRopeException(i,j,cur.substring?.length ??0);
+            }
+           
         }
         dfs(r,i);
     }
@@ -557,34 +441,16 @@ export class Rope{
      * @internal 
      * {@link split}
      */
-    private static compression(r: Rope): void{
-        let next: Rope|null = (r.right === null)? r.left: r.right; 
-        let updateRoot: boolean; 
+    private static compression(r: Rope| null): Rope| null{
+        if(r === null) return null;
 
-        if(r.right === null){
-            next = r.left; 
-            updateRoot = true;
-        }
-        else{
-            next = r.right; 
-            updateRoot = false; 
-        }
-
-        // nothing to do if its null 
-        if(next === null) return; 
-
-        function dfs(curr:Rope){
-            if(curr.right !== null){
-                dfs(curr.right);
+        if(r.right !== null){
+                r.right = this.compression(r.right);
             }
-            else if(curr.left !== null){ // removes unessary node. 
-                curr = Object.assign(Object.create(Rope.prototype),r.left);
-                dfs(curr);
-            }
+        else if(r.left !== null){ // removes unessary node. 
+            return this.compression(r.left);
         }
-        dfs(next);
-
-        if(updateRoot) r.leftCount = r.length;
+        return r; 
     }
 
     /**
@@ -596,8 +462,263 @@ export class Rope{
     private static unifyRight(rightPeices: Rope[]): Rope |null{
         while(rightPeices.length >=2) 
             rightPeices[rightPeices.length-2] = 
-            this.combineWithLeftCount(rightPeices[rightPeices.length-2]!,rightPeices.pop()!);  
+            this.combineWithLeftCount(rightPeices.pop()!,rightPeices[rightPeices.length-1]!);  
         return (rightPeices.length === 1)? rightPeices.pop()!: null;
     }   
 
+    /**
+     * Accounts for leftCount. 
+     * @param r1 
+     * @param r2 
+     * @returns {Rope}
+     */
+    private static combineWithLeftCount(r1:Rope,r2:Rope) :Rope{
+        let newRope: Rope = new Rope(r1,r2);
+        newRope.leftCount =  r1.length; 
+        newRope.depth = Math.max(r1.depth!,r2.depth!) +1;
+        return newRope;
+    }
+
+    /**
+     * Places the new given Rope at the ith index. 
+     * @param {number} i 
+     * @param {Rope} s 
+     * @returns {void}
+     */
+    insert(i:number,s: string): Rope{
+        if(s.length ===0 ||null) throw new EmptyRopeException();
+        const LEN: number = s.length;
+
+        let stack: Rope[] = [];
+
+        /**
+         * @param {Rope}r
+         * @param {number} j
+         * @returns {Rope}
+         */
+        function dfs(r:Rope,j:number){
+            // left case 
+            if (j <r.leftCount &&r.left !== null){ 
+                r.leftCount += LEN;
+                stack.push(r);
+                dfs(r.left,j);
+            } // right case 
+            else if(j>=r.leftCount &&r.right !== null){
+                r.depth = (r.left !==null)? Math.max(r.left.depth+1,r.right.depth+2): r.depth+1;
+                stack.push(r);
+                dfs(r.right,j-r.leftCount);
+            } 
+            else if (r.left === null && r.right === null 
+                &&r.substring !== null && j<r.leftCount && j >=0){
+                    let substring: string = r.substring;
+                if(j <substring.length-1){
+                    let left: Rope = new Rope(substring.slice(0,j+1));
+                    let middle: Rope = new Rope(s);
+                    let right: Rope = new Rope(substring.slice(j+1,substring.length));
+
+                    r.left = Rope.combine(left,middle);
+                    r.right = right; 
+                    r.substring = null;
+                    r.depth =2; 
+                }
+                else{
+
+                    let left: Rope = Object.assign(Object.create(Rope.prototype),r);
+                    let right: Rope = new Rope(s);
+
+                    r.left= left;
+                    r.right = right; 
+                    r.substring = null; 
+                    r.depth=1; 
+                }
+                updateDepth();
+            }
+            else{
+                throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
+            }
+        }
+        
+        function updateDepth(): void{
+            while(stack.length){
+                let r: Rope = stack.pop()!;
+                if(r.left !==null){
+                    r.depth = (r.right !==null)? 
+                        Math.max(r.left.depth,r.right.depth)+1 : r.depth+1;
+                }
+                else if(r.right !== null){
+                    r.depth = r.depth +1; 
+                }
+            }
+        }
+
+        dfs(this,i);
+
+        const TOTAL_LEN: number = LEN + this.length;
+        if(this.depth > REBALANCE_COEFFICENT*Math.log2(TOTAL_LEN)){
+            return Rope.rebalance(this);
+        }
+        return this; 
+    }
+    
+
+    /**
+     * Removes the string from [i,j].
+     * @param {number} i 
+     * @param {number} j 
+     */
+    delete(i:number,j:number): Rope{
+        if (i <0) throw new NegativeIndexException(i);
+        if (j< 0) throw new NegativeIndexException(j);
+        if (j-i < 0)  throw new InvalidRageForRopeException(i, j);
+        
+        if(i ==j){
+            this.removeSingleString(i);
+            return this; 
+        }
+        else if(i !==0){ 
+            const firstSplit: [Rope|null,Rope|null] = this.split(i-1);
+            let r1: Rope| null = firstSplit[0];
+            let r2: Rope |null = firstSplit[1];
+    
+            //updates what is taken out of the second split to fix the issue, through (i-j).
+            const secondSplit: [Rope|null,Rope|null] = r2!.split(j-i);
+            
+            let r4: Rope| null = secondSplit[1];
+            
+            // test edge case for when j is at the end of the rope. 
+            let combinedRope: Rope = (r4 ===null)? r1!: r1!.concatenate(r4);
+
+            return combinedRope; 
+        }
+        else{// if i is zero than there is nothing to attach to so only one split can be done. 
+            const firstSplit: [Rope|null,Rope|null] = this.split(j);
+            let r2: Rope |null = firstSplit[1];
+            return r2!; 
+        }
+    }
+
+    /**
+     * Use for the case when only one string needs to removed. 
+     * @param i 
+     * @internal 
+     * {@link delete}
+     */
+    private removeSingleString(i:number){
+   
+        function dfs(r:Rope,j:number){
+            // left case 
+            if (j <r.leftCount &&r.left !== null){  
+                r.leftCount--; 
+                dfs(r.left,j);
+            } // right case 
+            else if(j>=r.leftCount &&r.right !== null){
+                dfs(r.right,j-r.leftCount); // postion of char is in
+            } // relation tor.right is j-s.leftCount
+            else if (r.left === null && r.right === null 
+                &&r.substring !== null && j<r.leftCount && j >=0){
+                let substring: string = r.substring;
+
+                if(j!==0){ 
+                    r.substring = (substring.length-1 !== i)?
+                        substring.slice(0,j) +substring.slice(j+1,substring.length)
+                        : substring.slice(0,j); 
+                }
+                else{
+                    r.substring = (substring.length !==1)? 
+                        substring.slice(1,substring.length): null;
+                } 
+
+                r.leftCount--; 
+            }
+            else{
+                  throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
+            } 
+        }
+
+        dfs(this,i);
+    }
+
+    /**
+     * Gives the string from [i,j]. 
+     * @param {number} i 
+     * @param {number} j 
+     * @returns {string}
+     */
+    report(i:number,j:number):string{
+        let partitions: string[] = [];
+        let charLeft: number = j-i +1;
+        if (i <0) throw new NegativeIndexException(i);
+        if (j< 0) throw new NegativeIndexException(j);
+        if (charLeft <= 0)  throw new InvalidRageForRopeException(i, j);
+       
+
+        function dfs(r:Rope,start:number){
+            // left case 
+            if (start <r.leftCount &&r.left !== null){ 
+                if(r.leftCount - start < charLeft && r.right !== null){
+                    dfs(r.left,start);
+                    // right call because, there are more chars left 
+                    dfs(r.right,0); //outside of the left  calls window. 
+                }else{
+                    dfs(r.left,start);
+                } 
+            } // right case 
+            else if(j>=r.leftCount &&r.right !== null){
+                  dfs(r.right,start-r.leftCount); // postion of char is in
+                  // relation tor.right is j-s.leftCount
+            } 
+            else if (r.left === null && r.right === null 
+                && r.substring !== null && start<r.leftCount){
+
+                let subString: string = r.substring;
+                let len: number = subString.length;
+                let end: number = start + Math.min(charLeft,len-start);
+                charLeft -= (end-start); 
+                partitions.push(subString.slice(start,end));
+            }
+            else{
+                throw new IndexNotInRopeException(i,j,r.substring?.length ??0);
+            }
+        }
+        dfs(this,i);
+        return partitions.join("");
+    }
+
+    /**
+     * Performs DFS and prints all node
+     * @returns {void}
+     */
+    printAll(): void{
+        function dfs(r:Rope| null){
+            if(r === null) return; 
+
+            if (r.substring !== null){
+                console.log(`substring: ${r.substring} |leftCount: ${r.leftCount} |depth: ${r.depth}|`);
+            }
+            else{
+                 console.log(`leftCount: ${r.leftCount} |depth: ${r.depth}|`);
+            }
+            dfs(r.left); dfs(r.right);
+        }
+        dfs(this);
+    }
+
+    /**
+     * Used to make a given copy of a given Rope.
+     */
+    copy(): Rope{
+        const ropeCopy: Rope = Object.assign(Object.create(Rope.prototype),this);
+        function dfs(cur:Rope ){
+            if(cur.left !== null){
+                cur.left = Object.assign(Object.create(Rope.prototype),cur.left);
+                dfs(cur.left!);
+            }
+            if(cur.right !== null){
+                cur.right = Object.assign(Object.create(Rope.prototype),cur.right);
+                dfs(cur.right!);
+            }
+        }
+        dfs(ropeCopy)
+        return ropeCopy;
+    }
 }   

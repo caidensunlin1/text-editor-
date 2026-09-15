@@ -51,7 +51,7 @@ export function makeUnbalancedTree() :Rope{
  *                      /         \
  *                   (512)           (512)
  *                  /    \        /         \
- *            (L1|512)  (L2|512) (L3|512)  (L4|146)
+ *            (L1|512)  (L2|512) (L3|512)  (L4|165) 
  */
 export function makeUnbalancedTreeWithLargeStrings() :Rope{
     let s: string[] = [randomString(455),randomString(395),
@@ -83,5 +83,20 @@ function concatenateAllRopes(ropes: string[]): Rope{
     for(let i=1; i<ropes.length;i++)
         r= r.concatenate(new Rope(ropes[i]!));
     return r;
+}
+
+/**
+ * Used to test that split does not change the values of a given rope. 
+ */
+export function areRopesEqual(r1: Rope| null, r2: Rope |null): boolean{
+    if(r1=== null && r2 === null){
+        return true;
+    }
+    else if(r1!.leftCount === r2!.leftCount && r1!.string === r2!.string){
+        return true && areRopesEqual(r1!.left,r2!.left) && areRopesEqual(r1!.right,r2!.right);
+    }
+    else{
+        return false;
+    }
 }
 
