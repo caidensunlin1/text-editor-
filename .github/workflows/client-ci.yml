@@ -12,7 +12,7 @@ jobs:
 
         defaults:
             run:
-                working-directory: cleint 
+                working-directory: client
         
         steps: 
             - name: Checkout code 
