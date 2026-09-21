@@ -5,7 +5,8 @@
     "jest": "^30.4.2",
     "prettier": "^3.9.6",
     "ts-jest": "^29.4.12",
-    "typescript": "5.9"
+    "typescript": "5.9",
+    "vite": "^8.3.0"
   },
   "name": "text-editor-",
   "version": "1.0.0",
@@ -120,6 +121,7 @@
     "lines-and-columns": "^1.2.4",
     "locate-path": "^5.0.0",
     "lru-cache": "^5.1.1",
+    "lucide-react": "^1.47.0",
     "make-dir": "^4.0.0",
     "makeerror": "^1.0.12",
     "merge-stream": "^2.0.0",
@@ -195,6 +197,9 @@
     "yocto-queue": "^0.1.0"
   },
   "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
     "test": "jest"
   },
   "repository": {
