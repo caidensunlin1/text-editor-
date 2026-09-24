@@ -1,7 +1,8 @@
 import Button from "./Button";
 
 function Clicker(props:Button){
-    
+     const iconLocation: string = (typeof props.icon === "string")? props.icon:"";
+
     return(
     <div style={{
         width: `${props.width}`,
@@ -12,7 +13,7 @@ function Clicker(props:Button){
            cursor: "pointer",
            border: "none" 
         }}>
-        <img src={props.icon} />
+        <img src={iconLocation} />
         </button>
     </div>);
 }

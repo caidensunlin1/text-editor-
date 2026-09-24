@@ -6,7 +6,7 @@ import TitleInput from "../../Buttons/TitleInput";
 function ToolBar(){
     return(
         <div className="tool-bar-border">
-            <TitleInput height={25} width={100} marginRight={1}/>
+            <TitleInput height={25} width={200} marginRight={1}/>
             <BackClicker height={25} width={25} marginRight={1}/>
             <ForwardClicker height={25} width={25} marginRight={1}/>
         </div>

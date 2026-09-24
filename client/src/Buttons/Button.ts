@@ -1,8 +1,9 @@
 interface Button{
-    icon: string; 
+    icon?: string; 
+    border?: string;
     height: number;
     width: number;
-    marginRight: number;
+    marginRight?: number;
 }
 
 export default Button
