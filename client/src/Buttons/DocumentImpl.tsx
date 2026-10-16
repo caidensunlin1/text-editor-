@@ -1,9 +1,34 @@
+import { useEffect, useRef } from "react";
 import Button from "./Button";
+import { MAX_PAGE_CHARS } from "../Constants/EditingConstnats";
 
 
 function DocumentImpl(props: Button){
+
+    //Here In order to keep track of the user's inputs 
+    // const textAreaRef = useRef<HTMLTextAreaElement>(null);
+    
+    // // function handleClick1(){
+    // useEffect(() =>
+    //     {
+    //     // const textArea: React.RefObject<HTMLTextAreaElement | null> = textAreaRef;
+
+    //     if(textAreaRef.current) {
+    //         textAreaRef.current.value.length;
+    //         textAreaRef.current.
+    //     }
+    //     }
+
+
+    //     )
+        
+// onInput={(event) => {
+//     const count = event.currentTarget.value.length;
+//     console.log(count);
+//   }}
     return(<div>
-        <textarea style={{
+        <textarea maxLength={MAX_PAGE_CHARS}
+            style={{
             width: `${props.width}px`,
             height: `${props.height}px`,
             resize: "none",

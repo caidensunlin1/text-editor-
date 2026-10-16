@@ -1,6 +1,5 @@
 import DocumentImpl from "./DocumentImpl";
 
-
 function Page(){
     return(
         <DocumentImpl 
