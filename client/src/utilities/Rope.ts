@@ -1,8 +1,8 @@
-import { EmptyRopeException } from '../exceptions/utilities/EmptyRopeException';
-import { IndexNotInRopeException } from '../exceptions/utilities/IndexNotInRopeException';
-import { InvalidRageForRopeException } from '../exceptions/utilities/InvalidRageForRopeException';
-import { MaxLengthException } from '../exceptions/utilities/MaxLengthException';
-import { NegativeIndexException } from '../exceptions/utilities/NegativeIndexException';
+import { EmptyRopeException } from '../exceptions/utilities/Rope/EmptyRopeException';
+import { IndexNotInRopeException } from '../exceptions/utilities/Rope/IndexNotInRopeException';
+import { InvalidRageForRopeException } from '../exceptions/utilities/Rope/InvalidRageForRopeException';
+import { MaxLengthException } from '../exceptions/utilities/Rope/MaxLengthException';
+import { NegativeIndexException } from '../exceptions/utilities/Rope/NegativeIndexException';
 import { MAX_LENGTH, REBALANCE_COEFFICENT } from './Constants';
 
 

@@ -1,4 +1,4 @@
-import { MAX_LENGTH } from "../../utilities/Constants";
+import { MAX_LENGTH } from "../../../utilities/Constants";
 
 export class MaxLengthException extends Error{
     subStringLen: number;

@@ -1,13 +1,11 @@
-import { IndexNotInRopeException } from '../../src/exceptions/utilities/IndexNotInRopeException';
+import { IndexNotInRopeException } from '../../src/exceptions/utilities/Rope/IndexNotInRopeException';
 import {Rope} from '../../src/utilities/Rope';
 import { expect, test, describe} from '@jest/globals';
 import { areRopesEqual, makeUnbalancedTree, 
     makeUnbalancedTreeWithLargeStrings, populateBigRope } from './RopeTestHelper';
 import { MAX_LENGTH, REBALANCE_COEFFICENT } from '../../src/utilities/Constants';
-import { NegativeIndexException } from '../../src/exceptions/utilities/NegativeIndexException';
-import { InvalidRageForRopeException } from '../../src/exceptions/utilities/InvalidRageForRopeException';
-
-
+import { NegativeIndexException } from '../../src/exceptions/utilities/Rope/NegativeIndexException';
+import { InvalidRageForRopeException } from '../../src/exceptions/utilities/Rope/InvalidRageForRopeException';
 
 describe("Test Search", ()=> {
     test("search finds correct value",search_finds_correct_value),
